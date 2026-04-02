@@ -1182,23 +1182,6 @@ def save_current_fit(event=None):
     a, b = ab_params[label]
 
 
-    if result is None:
-        print(f"❌ Ei sovitusta tallennettavaksi: {label}")
-        return
-
-    if "decay" in label:
-        ref_10 = fit_results.get("5um_decay")
-        ref_290 = fit_results.get("1300um_decay")
-        is_self_10 = label == "5um_decay"
-        is_self_290 = label == "1300um_decay"
-    elif "feeder" in label:
-        ref_10 = fit_results.get("5um_feeder")
-        ref_290 = fit_results.get("1300um_feeder")
-        is_self_10 = label == "5um_feeder"
-        is_self_290 = label == "1300um_feeder"
-    else:
-        print(f"❌ Tuntematon label: {label}")
-        return
 
 
 
