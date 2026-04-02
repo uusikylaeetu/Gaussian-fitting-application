@@ -11,7 +11,6 @@ saved_fits = {}
 
 EFF_FEEDER = 1.7
 SIG_EFF_FEEDER = 0.02
-
 EFF_DECAY = 1.0
 SIG_EFF_DECAY = 0.02
 
@@ -21,12 +20,13 @@ _updating_a_box = False
 _updating_b_box = False
 
 def calculate_b_ki_and_error(decay_params, feeder_params):
+	
     """
     Laskee
+        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * eff_decay / feeder
 
-        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * (EFF_FEEDER / EFF_DECAY)
-
-    sekä virheen sig_b_ki.
+    sekä virheen
+        sig_b_ki
 
     Oletetaan riippumattomat virheet.
     """
@@ -52,6 +52,7 @@ def calculate_b_ki_and_error(decay_params, feeder_params):
     if total_decay <= 0 or total_feeder <= 0:
         return np.nan, np.nan
 
+    # Summan virhe
     sig_total_decay = np.sqrt(dArea1_d**2 + dArea2_d**2)
     sig_total_feeder = np.sqrt(dArea1_f**2 + dArea2_f**2)
 
@@ -1593,58 +1594,3 @@ plt.show()
 build_output_files()
 
 
-
-import numpy as np
-import pandas as pd
-
-# Lue decay- ja feeder-tiedostot
-decay_df = pd.read_csv("gaussian_peak_areas_decay_with_ratios_ring2_66As_8.txt", sep="\s+", header=None)
-feeder_df = pd.read_csv("gaussian_peak_areas_feeder_with_ratios_ring2_66As_8.txt", sep="\s+", header=None)
-
-# Nimeä sarakkeet
-cols = [
-    "label", "Area1", "dArea1", "Area2", "dArea2", "AreaRatio1", "dAreaRatio1",  "AreaRatio2", "dAreaRatio2"
-]
-decay_df.columns = feeder_df.columns = cols
-
-# Ota etäisyys labelista
-decay_df["d"] = decay_df["label"].str.extract(r"(\d+)").astype(float)
-feeder_df["d"] = feeder_df["label"].str.extract(r"(\d+)").astype(float)
-
-# Lajittele etäisyyden mukaan
-decay_df = decay_df.sort_values("d")
-feeder_df = feeder_df.sort_values("d")
-
-# Laske suhteet ja virheet
-def compute_fractions(df):
-    Area1 = df["Area1"].values
-    Area2 = df["Area2"].values
-    dA1 = df["dArea1"].values
-    dA2 = df["dArea2"].values
-    total = Area1 + Area2
-
-    I_S = Area1 / total
-    I_D = Area2 / total
-
-    dI_S = I_S * np.sqrt((dA1 / Area1)**2 + (dA2 / total)**2)
-    dI_D = I_D * np.sqrt((dA2 / Area2)**2 + (dA1 / total)**2)
-
-    return I_S, dI_S, I_D, dI_D
-
-I_S_decay, sig_I_S_decay, I_D_decay, sig_I_D_decay = compute_fractions(decay_df)
-I_S_feeder, sig_I_S_feeder, I_D_feeder, sig_I_D_feeder = compute_fractions(feeder_df)
-
-# Kokoa lopullinen DataFrame
-n = min(len(decay_df), len(feeder_df))
-
-output_df = pd.DataFrame({
-    "d": decay_df["d"].values[:n] / 1e6,
-    "I_S_decay": I_S_decay[:n],
-    "sig_I_S_decay": sig_I_S_decay[:n],
-    "I_D_decay": I_D_decay[:n],
-    "sig_I_D_decay": sig_I_D_decay[:n],
-    "I_S_feeder": I_S_feeder[:n],
-    "sig_I_S_feeder": sig_I_S_feeder[:n],
-    "I_D_feeder": I_D_feeder[:n],
-    "sig_I_D_feeder": sig_I_D_feeder[:n],
-})
