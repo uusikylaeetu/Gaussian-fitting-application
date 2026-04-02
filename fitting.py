@@ -1185,18 +1185,6 @@ def save_current_fit(event=None):
 
 
 
-
-    if ref_10 is None or ref_290 is None:
-        print(f"❌ Viitesovitukset puuttuvat ({label})")
-        return
-    
-    # Tarkista onko tallennettava spektri itse viite
-    is_self_10 = label == "5um_decay" if "decay" in label else label == "5um_feeder"
-    is_self_290 = label == "1300um_decay" if "decay" in label else label == "1300um_feeder"
-    
-    _, _, _, popt_10 = ref_10
-    _, _, _, popt_290 = ref_290
-    _, _, _, popt_self = result
     
     # Päivitä mu1/mu2 ja sigma1/sigma2 oikeista lähteistä
     mu2_fixed = slider_mu2.val
