@@ -19,6 +19,39 @@ _updating_mu2_box = False
 _updating_a_box = False
 _updating_b_box = False
 
+def save_auto_fit_params(filename="autofit_params_ring2_66As_8.txt"):
+    with open(filename, "w") as f:
+        for label, vals in auto_fit_params.items():
+            f.write(
+                f"{label} "
+                f"{int(vals['A1'])} {int(vals['A2'])} "
+                f"{int(vals['sigma1'])} {int(vals['sigma2'])} "
+                f"{int(vals['mu1'])} {int(vals['mu2'])}\n"
+            )
+
+def load_auto_fit_params(filename="autofit_params_ring2_66As_8.txt"):
+    if not os.path.exists(filename):
+        return
+
+    with open(filename, "r") as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) != 7:
+                continue
+
+            label = parts[0]
+            if label not in auto_fit_params:
+                continue
+
+            auto_fit_params[label] = {
+                "A1": bool(int(parts[1])),
+                "A2": bool(int(parts[2])),
+                "sigma1": bool(int(parts[3])),
+                "sigma2": bool(int(parts[4])),
+                "mu1": bool(int(parts[5])),
+                "mu2": bool(int(parts[6])),
+            }
+
 def calculate_b_ki_and_error(decay_params, feeder_params):
 	
     """
@@ -715,6 +748,7 @@ auto_fit_params = {
     }
     for label in files
 }
+load_auto_fit_params()
 _updating_auto_checkbox = False
 
 def auto_checkbox_callback(label):
@@ -737,6 +771,7 @@ def auto_checkbox_callback(label):
         auto_fit_params[current_label]["mu2"] = not auto_fit_params[current_label]["mu2"]
 
     update_plot()
+	save_auto_fit_params()
 
 auto_checkbox.on_clicked(auto_checkbox_callback)
 
