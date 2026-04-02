@@ -9,17 +9,18 @@ from scipy.optimize import curve_fit
 import os
 saved_fits = {}
 
-
- 
+EFF_FEEDER = 1.7
+EFF_DECAY =  1
 _updating_mu1_box = False
 _updating_mu2_box = False
 _updating_a_box = False
 _updating_b_box = False
 
 def calculate_b_ki_and_error(decay_params, feeder_params):
+	
     """
     Laskee
-        b_ki = (Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay) * eff_feeder / eff_decay
+        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * eff_decay / feeder
 
     sekä virheen
         sig_b_ki
@@ -52,7 +53,7 @@ def calculate_b_ki_and_error(decay_params, feeder_params):
     sig_total_decay = np.sqrt(dArea1_d**2 + dArea2_d**2)
     sig_total_feeder = np.sqrt(dArea1_f**2 + dArea2_f**2)
 
-    b_ki = (total_feeder / total_decay) * (EFF_FEEDER / EFF_DECAY)
+    b_ki = (total_feeder / total_decay) * (EFF_DECAY / EFF_FEEDER )
 
     rel2 = (
         (sig_total_feeder / total_feeder) ** 2 +
