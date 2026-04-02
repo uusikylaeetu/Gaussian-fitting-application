@@ -210,8 +210,6 @@ def on_radio(label):
     set_safe(slider_A2, A2_val)
 
 
-
-
 # --- Globaalit funktiot ---
 # --- Yhteenvetokuva kaikista spektri+fit -pareista ---------------------------
 
@@ -469,8 +467,6 @@ def calculate_ratio_and_error(A1, sigma1, A2, sigma2, dA1, dA2, dsigma1, dsigma2
 
     return Area1, dArea1, Area2, dArea2, ratio1, dRatio1, ratio2, dRatio2
 
-
-
 def overwrite_entry_in_file(filename, label, line_content, ratio_info=None):
     """Korvaa tiedostossa rivin, joka alkaa annetulla labelilla, uudella rivillä.
     Tulostaa lisäksi tallennettavat arvot, jos ratio_info annetaan."""
@@ -547,10 +543,6 @@ def export_saved_fits_to_file(filename="ratios_ring2_66As_8.txt"):
         print("mu1_err", mu1_err)
         print("mu2_err", mu2_err)
 
-
-
-        
-
         lines.append(
             f"{label:<18} {A1:6.0f} {mu1:7.2f} {sigma1:6.2f} "
             f"{A2:6.0f} {mu2:7.2f} {sigma2:6.2f} {a:6.2f} {b:6.1f} "
@@ -563,8 +555,6 @@ def export_saved_fits_to_file(filename="ratios_ring2_66As_8.txt"):
 
 def is_feeder_label(label: str) -> bool:
     return "feeder" in label
-
-
 
 
 min_decay = 910
@@ -630,9 +620,6 @@ plt.subplots_adjust(left=0.3, bottom=0.35)
 
 radio_ax = plt.axes([0.01, 0.4, 0.2, 0.5])
 radio = RadioButtons(radio_ax, list(files.keys()))
-
-
-
 
 
 checkbox_ax = plt.axes([0.01, 0.25, 0.2, 0.1])
@@ -706,13 +693,6 @@ def get_sigma_uncertainties(label, default_sigma1=0.1, default_sigma2=0.1):
     return default_sigma1, default_sigma2
 
 
-
-
-
-
-
-
-
 slider_ax_a = plt.axes([0.3, 0.15, 0.55, 0.03])
 slider_a = Slider(slider_ax_a, 'a (bg)', -1.5, 1.5, valinit=0)
 
@@ -761,9 +741,6 @@ def on_slider_b_change(val):
         _updating_b_box = False
     update_plot()
 
-
-
-
 textbox_ax_a = plt.axes([0.92, 0.15, 0.1, 0.03])  # sijoittelu sliderin oikealle puolelle
 textbox_a = TextBox(textbox_ax_a, '', initial=str(slider_a.val))
 
@@ -808,10 +785,10 @@ slider_A2.on_changed(on_slider_A2_change)
 
 
 slider_ax_mu1 = plt.axes([0.3, 0.2, 0.55, 0.03])
-slider_mu1 = Slider(slider_ax_mu1, r'$\mu_1$ (keV)', 940, 970, valinit=953)
+slider_mu1 = Slider(slider_ax_mu1, r'$\mu_1$ (keV)', 950, 980, valinit=963)
 
 slider_ax_mu2 = plt.axes([0.3, 0.25, 0.55, 0.03])
-slider_mu2 = Slider(slider_ax_mu2, r'$\mu_2$ (keV)', 940, 970, valinit=961)
+slider_mu2 = Slider(slider_ax_mu2, r'$\mu_2$ (keV)', 950, 980, valinit=973)
 
 textbox_ax_mu1 = plt.axes([0.92, 0.2, 0.55, 0.03])  # sijoittelu sliderin oikealle puolelle
 textbox_mu1 = TextBox(textbox_ax_mu1, '', initial=str(slider_mu1.val))
@@ -891,8 +868,6 @@ slider_ax_sigma1 = plt.axes([0.3, 0.89, 0.55, 0.03])  # sen alla
 slider_sigma1 = Slider(slider_ax_sigma1, r'$\sigma_1$', 1.0, 6.0, valinit=2)
 
 current_label = list(files.keys())[0]
-
-
 
 def update_plot():
 
@@ -1066,13 +1041,6 @@ def update_plot():
         _updating_link = False
 
 
-
-
-
-
-    
-    
-
     # --- LASKETAAN KÄYRÄT ---
     g1 = A1 * np.exp(-(x_smooth - mu1_fixed)**2 / (2 * sigma1_fixed**2)) + a*x_smooth + b
     g2 = A2 * np.exp(-(x_smooth - mu2_fixed)**2 / (2 * sigma2_fixed**2)) + a*x_smooth + b
@@ -1104,8 +1072,6 @@ def update_plot():
         va='top'
     )
 	
-
-
     fig.canvas.draw_idle()
 
 radio.on_clicked(on_radio)
@@ -1155,21 +1121,11 @@ from matplotlib.widgets import Button
 
 # a ja b parametrien muisti
 
-
-
 def calculate_area_and_error(A, sigma, dA, dsigma):
     """Laskee alueen ja sen virheen oikein."""
     area = A * sigma * np.sqrt(2 * np.pi)
     darea = np.sqrt(area)#/area
     return area, darea
-
-
-
-
-
-
-
-
 
 def print_saved_table():
     if not saved_fits:
@@ -1433,24 +1389,9 @@ def save_current_fit(event=None):
         except:
             pass
 
-
-
-
-
-
-
-
-
-
-
-
     else:
         # Käytä slider-arvoja
         A1, A2 = amp_params[label]
-
-
-
-
 
     final_popt = [A1, mu1_fixed, sigma1_fixed, A2, mu2_fixed, sigma2_fixed, a, b]
     
