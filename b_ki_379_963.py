@@ -1562,14 +1562,16 @@ I_S_decay, sig_I_S_decay, I_D_decay, sig_I_D_decay = compute_fractions(decay_df)
 I_S_feeder, sig_I_S_feeder, I_D_feeder, sig_I_D_feeder = compute_fractions(feeder_df)
 
 # Kokoa lopullinen DataFrame
+n = min(len(decay_df), len(feeder_df))
+
 output_df = pd.DataFrame({
-    "d": decay_df["d"].values / 1e6,  # µm -> m
-    "I_S_decay": I_S_decay,
-    "sig_I_S_decay": sig_I_S_decay,
-    "I_D_decay": I_D_decay,
-    "sig_I_D_decay": sig_I_D_decay,
-    "I_S_feeder": I_S_feeder,
-    "sig_I_S_feeder": sig_I_S_feeder,
-    "I_D_feeder": I_D_feeder,
-    "sig_I_D_feeder": sig_I_D_feeder,
+    "d": decay_df["d"].values[:n] / 1e6,
+    "I_S_decay": I_S_decay[:n],
+    "sig_I_S_decay": sig_I_S_decay[:n],
+    "I_D_decay": I_D_decay[:n],
+    "sig_I_D_decay": sig_I_D_decay[:n],
+    "I_S_feeder": I_S_feeder[:n],
+    "sig_I_S_feeder": sig_I_S_feeder[:n],
+    "I_D_feeder": I_D_feeder[:n],
+    "sig_I_D_feeder": sig_I_D_feeder[:n],
 })
