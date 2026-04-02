@@ -567,11 +567,11 @@ max_feed = 429
 files = {
     "0_5keV_decay": ("juro3_beta_tagged_total_0_5keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
     "1keV_decay": ("juro3_beta_tagged_total_1keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
-    "1keV_decay_mpq_decay": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
+    "1keV_mpq_decay": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
 
     "0_5keV_feeder": ("juro3_beta_tagged_total_0_5keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
     "1keV_feeder": ("juro3_beta_tagged_total_1keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
-    "1keV_decay_mpq_feeder": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0])
+    "1keV_mpq_feeder": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0])
 }
 
 fit_results = {}
