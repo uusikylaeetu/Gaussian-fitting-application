@@ -320,7 +320,16 @@ def single_gaussian_with_linear(x, A1, mu1, sigma1, a, b):
     g1 = A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2))
     return g1 + a * x + b
 
-
+def calculate_chi2(x, y, y_model, n_params=8):
+    """
+    Laskee chi^2 ja reduced chi^2.
+    Poisson-oletus: sigma = sqrt(max(y, 1))
+    """
+    sigma = np.sqrt(np.maximum(y, 1.0))
+    chi2 = np.sum(((y - y_model) / sigma) ** 2)
+    dof = len(y) - n_params
+    chi2_red = chi2 / dof if dof > 0 else np.nan
+    return chi2, chi2_red
 
 
 def write_int_ring2():
@@ -1011,7 +1020,6 @@ def update_plot():
     bg = a*x_smooth + b
     total = g1 + g2 - bg
 
-    # --- PIIRTO ---
     ax.clear()
     ax.step(x_fit, y_fit, where='mid', color='black')
     ax.plot(x_smooth, g1, color='blue')
@@ -1019,11 +1027,23 @@ def update_plot():
     ax.plot(x_smooth, bg, 'k--')
     ax.plot(x_smooth, total, 'r')
 
+    # Malli chi^2-laskua varten samoissa x_fit-pisteissä
+    y_model_fit = double_gaussian_with_linear(
+        x_fit, A1, mu1_fixed, sigma1_fixed, A2, mu2_fixed, sigma2_fixed, a, b
+    )
+    chi2, chi2_red = calculate_chi2(x_fit, y_fit, y_model_fit, n_params=8)
+
     # Tekstit
     fwhm = 2.355 * abs(sigma2_fixed)
-    ax.text(0.05, 0.95, f"mu2 = {mu2_fixed:.2f} keV\nFWHM = {fwhm:.2f} keV",
-            transform=ax.transAxes, va='top')
-
+    ax.text(
+        0.05, 0.95,
+        f"$\\mu_2$ = {mu2_fixed:.2f} keV\n"
+        f"FWHM = {fwhm:.2f} keV\n"
+        f"$\\chi^2$ = {chi2:.2f}\n"
+        f"$\\chi^2_\\mathrm{{red}}$ = {chi2_red:.2f}",
+        transform=ax.transAxes,
+        va='top'
+    )
 	
 
 
