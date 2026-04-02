@@ -16,6 +16,55 @@ _updating_mu2_box = False
 _updating_a_box = False
 _updating_b_box = False
 
+def calculate_b_ki_and_error(decay_params, feeder_params):
+    """
+    Laskee
+        b_ki = (Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay) * eff_feeder / eff_decay
+
+    sekä virheen
+        sig_b_ki
+
+    Oletetaan riippumattomat virheet.
+    """
+
+    # saved_fits[label] = [
+    #   A1, mu1, sigma1, A2, mu2, sigma2, a, b,
+    #   Area1, Area2, sigma1_err, sigma2_err, dArea1, dArea2, dRatio1, dRatio2
+    # ]
+
+    Area1_d = float(decay_params[8])
+    Area2_d = float(decay_params[9])
+    dArea1_d = float(decay_params[12])
+    dArea2_d = float(decay_params[13])
+
+    Area1_f = float(feeder_params[8])
+    Area2_f = float(feeder_params[9])
+    dArea1_f = float(feeder_params[12])
+    dArea2_f = float(feeder_params[13])
+
+    total_decay = Area1_d + Area2_d
+    total_feeder = Area1_f + Area2_f
+
+    if total_decay <= 0 or total_feeder <= 0:
+        return np.nan, np.nan
+
+    # Summan virhe
+    sig_total_decay = np.sqrt(dArea1_d**2 + dArea2_d**2)
+    sig_total_feeder = np.sqrt(dArea1_f**2 + dArea2_f**2)
+
+    b_ki = (total_feeder / total_decay) * (EFF_FEEDER / EFF_DECAY)
+
+    rel2 = (
+        (sig_total_feeder / total_feeder) ** 2 +
+        (sig_total_decay / total_decay) ** 2 +
+        (SIG_EFF_FEEDER / EFF_FEEDER) ** 2 +
+        (SIG_EFF_DECAY / EFF_DECAY) ** 2
+    )
+
+    sig_b_ki = b_ki * np.sqrt(rel2)
+
+    return b_ki, sig_b_ki
+
 def build_output_files():
     decay_file = "gaussian_peak_areas_decay_with_ratios_ring2_66As_8.txt"
     feeder_file = "gaussian_peak_areas_feeder_with_ratios_ring2_66As_8.txt"
@@ -1148,8 +1197,10 @@ def print_saved_table():
     print("\n📊 Tallennetut sovitusparametrit:")
 
     header = (
-        f"{'Label':<18} {'A1':>6} {'mu1':>7} {'σ1':>6} {'A2':>6} {'mu2':>7} {'σ2':>6}"
-        f"{'a':>6} {'b':>6} {'Area1':>8} {'Area2':>8} {'ratio1':>7} {'dRatio1':>8} {'ratio2':>7} {'dRatio2':>8}"
+        f"{'Label':<18} {'A1':>6} {'mu1':>7} {'σ1':>6} {'A2':>6} {'mu2':>7} {'σ2':>6} "
+        f"{'a':>6} {'b':>6} {'Area1':>8} {'Area2':>8} "
+        f"{'ratio1':>7} {'dRatio1':>8} {'ratio2':>7} {'dRatio2':>8} "
+        f"{'b_ki':>10} {'sig_b_ki':>10}"
     )
     print(header)
     print("-" * len(header))
@@ -1169,17 +1220,37 @@ def print_saved_table():
     for label, params in saved_fits.items():
         A1, mu1, sigma1, A2, mu2, sigma2, a, b, Area1, Area2, sigma1_err, sigma2_err, dArea1, dArea2, dRatio1, dRatio2 = params
 
-        # Hae tallennetut ratioarvot virheineen
-        ratio1 = Area1 / (Area1 + Area2)
-        ratio2 = Area2 / (Area1 + Area2)
+        ratio1 = Area1 / (Area1 + Area2) if (Area1 + Area2) > 0 else np.nan
+        ratio2 = Area2 / (Area1 + Area2) if (Area1 + Area2) > 0 else np.nan
 
+        # Etsi decay-feeder -pari saman etäisyyden perusteella
+        if "decay" in label:
+            pair_label = label.replace("_decay", "_feeder")
+        elif "feeder" in label:
+            pair_label = label.replace("_feeder", "_decay")
+        else:
+            pair_label = None
+
+        b_ki = np.nan
+        sig_b_ki = np.nan
+
+        if pair_label is not None and pair_label in saved_fits:
+            if "decay" in label:
+                decay_params = saved_fits[label]
+                feeder_params = saved_fits[pair_label]
+            else:
+                decay_params = saved_fits[pair_label]
+                feeder_params = saved_fits[label]
+
+            b_ki, sig_b_ki = calculate_b_ki_and_error(decay_params, feeder_params)
 
         print(
             f"{label:<18} {A1:6.0f} {mu1:7.2f} {sigma1:6.2f} "
             f"{A2:6.0f} {mu2:7.2f} {sigma2:6.2f} {a:6.2f} {b:6.1f} "
-            f"{Area1:8.1f} {Area2:8.1f} {ratio1:7.4f} {dRatio1:8.4f} {ratio2:7.4f} {dRatio2:8.4f}"
+            f"{Area1:8.1f} {Area2:8.1f} "
+            f"{ratio1:7.4f} {dRatio1:8.4f} {ratio2:7.4f} {dRatio2:8.4f} "
+            f"{b_ki:10.4f} {sig_b_ki:10.4f}"
         )
-
 
         new_line = f"{label:<14} {ratio1:9.4f} {dRatio1:8.4f} {ratio2:9.4f} {dRatio2:8.4f}"
         lines_dict[label] = new_line
@@ -1187,7 +1258,6 @@ def print_saved_table():
     with open(ratios_only_file, "w") as f:
         for line in lines_dict.values():
             f.write(line + "\n")
-
 
 
 # 3. Tallennusnappi
