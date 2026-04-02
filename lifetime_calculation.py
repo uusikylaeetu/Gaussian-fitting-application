@@ -4,10 +4,10 @@ import os
 from scipy.optimize import minimize
 
 omega_ratio = 1
-b_ki = 0.8
+b_ki = 0.6
 # Globaalit epävarmuudet:
 sigma_b_ki = 0.1#0.05 * b_ki      # NEW
-sigma_omega = 0.05 * omega_ratio       # NEW
+sigma_omega = 0.005 * omega_ratio       # NEW
 
 from scipy.stats import norm
 
@@ -194,15 +194,6 @@ def käsittele_tiedosto(filename, title, v, del_v, t2, ax_int, ax_tau):
         print(f"{t_val*1e6:8.0f} | {a:10.3e} | {b:10.3e} | {c:10.3e} | {Ius_depop[i]:12.4e} | {sig_Ius_dep[i]:10.3e} | {Ius_feeder[i]:12.4e} | {sig_Ius_fdr[i]:10.3e} | {dIsh:12.3e}")
 
     print("=" * 110 + "\n")
-
-
-
-
-    
-    
-    
-    
-    
     tau_values = np.array(tau_values)
     tau_errors = np.array(tau_errors)
     weights = 1 / tau_errors**2
@@ -233,8 +224,6 @@ def käsittele_tiedosto(filename, title, v, del_v, t2, ax_int, ax_tau):
     
     ax_tau.set_ylabel(r'$\tau$ (ps)', fontsize=20)
     ax_tau.set_title(f"{title}: elinaika")
-    
-
     ymin_points = np.min(tau_values - tau_errors)
     ymax_points = np.max(tau_values + tau_errors)
     
@@ -250,14 +239,7 @@ def käsittele_tiedosto(filename, title, v, del_v, t2, ax_int, ax_tau):
     
     print("DEBUG ylim:", low, high)
     ax_tau.set_ylim(low, high)
-
-    
-
-
     ax_tau.set_xscale('log')
-
-
-
     print("tau =", tau_values.tolist())
     print("tau_errors =", tau_errors.tolist())
 
@@ -308,18 +290,6 @@ def käsittele_tiedosto(filename, title, v, del_v, t2, ax_int, ax_tau):
         print(f"{xp_um:8.0f} | {dI_val:12.6f}")
 
     print("=" * 30 + "\n")
-
-
-
-
-
-
-
-
-
-
-
-    
     return tau_values, tau_errors
 
 def piirra_erotus(filename, title, ax):
@@ -360,12 +330,7 @@ fig, axs = plt.subplots(1, 3, figsize=(16, 5))
 for ax in axs.flat:
     ax.tick_params(axis='both', which='both', direction='in')
 
-#tau1, dtau1 = käsittele_tiedosto("int_ring2_66As_3.txt", "Ring 2", v, del_v, t2_ring, axs[0], axs[1])
-tau1, dtau1 = käsittele_tiedosto("int_ring2_66As_3_fixed.txt", "Ring 2", v, del_v, t2_ring, axs[0], axs[1])    
-
-#piirra_erotus("int_ring2_66As_3.txt", "Ring 2", axs[2])
-piirra_erotus("int_ring2_66As_3_fixed.txt", "Ring 2", axs[2])
-
-    
+tau1, dtau1 = käsittele_tiedosto("int_ring2_66As_8.fit", "Ring 2", v, del_v, t2_ring, axs[0], axs[1])    
+piirra_erotus("int_ring2_66As_8.fit", "Ring 2", axs[2])
 plt.tight_layout()
 plt.show() 
