@@ -24,7 +24,7 @@ def calculate_b_ki_and_error(decay_params, feeder_params):
     """
     Laskee
 
-        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * (EFF_FEEDER / EFF_DECAY)**(-1)
+        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * (EFF_FEEDER / EFF_DECAY)
 
     sekä virheen sig_b_ki.
 
