@@ -1696,4 +1696,4 @@ with open("int_ring2_66As_8.fit", "w") as f_out:
         row.extend(data_decay.get(key, [0.0]*4))
         row.extend(data_feeder.get(key, [0.0]*4))
      #   row.append(last_column.get(key, 0.0))
-        f_out.write(" ".join(f"{x:.4f}" if isinstance(x, float) else str(x) for x in row) + "\n") myös labelit A1 ja A2 latex-formaattiin A_1 ja A_2
+        f_out.write(" ".join(f"{x:.4f}" if isinstance(x, float) else str(x) for x in row) + "\n") 
