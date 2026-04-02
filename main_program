@@ -9,68 +9,6 @@ import os
 saved_fits = {}
 
 
-plt.show()
-
-import numpy as np
-import pandas as pd
-import os
-
-decay_file = "gaussian_peak_areas_decay_with_ratios_ring2_66As_8_others.txt"
-feeder_file = "gaussian_peak_areas_feeder_with_ratios_ring2_66As_8_others.txt"
-
-if not os.path.exists(decay_file):
-    print(f"❌ Tiedostoa ei löytynyt: {decay_file}")
-elif not os.path.exists(feeder_file):
-    print(f"❌ Tiedostoa ei löytynyt: {feeder_file}")
-else:
-    decay_df = pd.read_csv(decay_file, sep=r"\s+", header=None)
-    feeder_df = pd.read_csv(feeder_file, sep=r"\s+", header=None)
-
-    cols = [
-        "label", "Area1", "dArea1", "Area2", "dArea2",
-        "AreaRatio1", "dAreaRatio1", "AreaRatio2", "dAreaRatio2"
-    ]
-    decay_df.columns = cols
-    feeder_df.columns = cols
-
-    decay_df["d"] = decay_df["label"].str.extract(r"(\d+)").astype(float)
-    feeder_df["d"] = feeder_df["label"].str.extract(r"(\d+)").astype(float)
-
-    decay_df = decay_df.sort_values("d")
-    feeder_df = feeder_df.sort_values("d")
-
-    def compute_fractions(df):
-        Area1 = df["Area1"].values
-        Area2 = df["Area2"].values
-        dA1 = df["dArea1"].values
-        dA2 = df["dArea2"].values
-        total = Area1 + Area2
-
-        I_S = Area1 / total
-        I_D = Area2 / total
-
-        dI_S = I_S * np.sqrt((dA1 / Area1)**2 + (dA2 / total)**2)
-        dI_D = I_D * np.sqrt((dA2 / Area2)**2 + (dA1 / total)**2)
-
-        return I_S, dI_S, I_D, dI_D
-
-    I_S_decay, sig_I_S_decay, I_D_decay, sig_I_D_decay = compute_fractions(decay_df)
-    I_S_feeder, sig_I_S_feeder, I_D_feeder, sig_I_D_feeder = compute_fractions(feeder_df)
-
-    output_df = pd.DataFrame({
-        "d": decay_df["d"].values / 1e6,
-        "I_S_decay": I_S_decay,
-        "sig_I_S_decay": sig_I_S_decay,
-        "I_D_decay": I_D_decay,
-        "sig_I_D_decay": sig_I_D_decay,
-        "I_S_feeder": I_S_feeder,
-        "sig_I_S_feeder": sig_I_S_feeder,
-        "I_D_feeder": I_D_feeder,
-        "sig_I_D_feeder": sig_I_D_feeder,
-    })
-
-    print(output_df)
-
 
 _updating_mu1_box = False
 _updating_mu2_box = False
@@ -157,9 +95,9 @@ def on_radio(label):
 
     # 2) Lataa tallennetut parametrit
     if "decay" in label:
-        saved_params = parse_saved_params("params_decay_ring2_66As_8_others.txt")
+        saved_params = parse_saved_params("params_decay_ring2_66As_8.txt")
     elif "feeder" in label:
-        saved_params = parse_saved_params("params_feeder_ring2_66As_8_others.txt")
+        saved_params = parse_saved_params("params_feeder_ring2_66As_8.txt")
     else:
         saved_params = {}
 
@@ -219,11 +157,14 @@ def on_radio(label):
 # --- Yhteenvetokuva kaikista spektri+fit -pareista ---------------------------
 
 def _get_saved_param_dicts():
-    decay_dict  = parse_saved_params("params_decay_ring2_66As_8_others.txt")
-    feeder_dict = parse_saved_params("params_feeder_ring2_66As_8_others.txt")
+    decay_dict  = parse_saved_params("params_decay_ring2_66As_8.txt")
+    feeder_dict = parse_saved_params("params_feeder_ring2_66As_8.txt")
     return decay_dict, feeder_dict
 
 def _params_for_label(label):
+    """Hae labelille mu/sigma/a/b: ensisijaisesti tallennetusta tiedostosta,
+    muuten fit_results-popteista. Feederissä varmistetaan mu1 = mu2 - DELTA_MU,
+    jollei tallennettua arvoa ole."""
     decay_dict, feeder_dict = _get_saved_param_dicts()
     source = feeder_dict if "feeder" in label else decay_dict
     if label in source:
@@ -234,14 +175,14 @@ def _params_for_label(label):
         return None
     _, _, _, popt = res
     d = {
-        "mu1": float(popt[1]),
-        "sigma1": float(popt[2]),
-        "mu2": float(popt[4]),
-        "sigma2": float(popt[5]),
-        "a": float(popt[6]),
-        "b": float(popt[7]),
+        "mu1":   float(popt[1]),
+        "sigma1":float(popt[2]),
+        "mu2":   float(popt[4]),
+        "sigma2":float(popt[5]),
+        "a":     float(popt[6]),
+        "b":     float(popt[7]),
     }
-    return d
+
 
 def _amplitudes_given_fixed(x, y, mu1, s1, mu2, s2, a, b):
     """Sovita A1 ja A2 kiinnitetyillä mu/sigma/a/b-arvoilla, jotta käyrä vastaa dataa."""
@@ -264,8 +205,8 @@ def draw_all_spectra(event=None):
 
     fig2, axes = plt.subplots(4, 2, figsize=(11, 10), sharex=False, sharey=False)
 
-    decay_saved = parse_saved_params("params_decay_ring2_66As_8_others.txt")
-    feeder_saved = parse_saved_params("params_feeder_ring2_66As_8_others.txt")
+    decay_saved = parse_saved_params("params_decay_ring2_66As_8.txt")
+    feeder_saved = parse_saved_params("params_feeder_ring2_66As_8.txt")
 
     for r, (lab_decay, lab_feeder) in enumerate(grid):
         for c, label in enumerate([lab_decay, lab_feeder]):
@@ -275,10 +216,10 @@ def draw_all_spectra(event=None):
             # Etäisyys otsikkoon (rivi kertoo sen jo)
             dist_um = rows[r].replace("um", "")
             if c == 0:
-                trans = r"$5^+ \to 3^+$"
+                trans = r"$2^+ \to 0^+$"
                 ax2.set_ylabel(r"Counts / 1 keV")
             else:
-                trans = r"$7^+ \to 5^+$"
+                trans = r"$3^+ \to 2^+$"
                 ax2.set_ylabel("")
             title = rf"$x = {dist_um}\,\mu\mathrm{{m}}$ ({trans})"
             ax2.set_title(title)
@@ -294,16 +235,15 @@ def draw_all_spectra(event=None):
 
             if label in saved_dict:
                 sp = saved_dict[label]
-
                 A1 = max(0.0, float(sp["A1"]))
                 A2 = max(0.0, float(sp["A2"]))
 
-                mu1 = float(sp["mu1"])
                 mu2 = float(sp["mu2"])
                 sigma1 = float(sp["sigma1"])
                 sigma2 = float(sp["sigma2"])
                 a = float(sp["a"])
                 b = float(sp["b"])
+
 
             else:
                 A1_f, mu1_f, sigma1_f, A2_f, mu2_f, sigma2_f, a_f, b_f = full_popt
@@ -311,12 +251,14 @@ def draw_all_spectra(event=None):
                 A1 = max(0.0, float(A1_f))
                 A2 = max(0.0, float(A2_f))
 
-                mu1 = float(mu1_f)
                 mu2 = float(mu2_f)
                 sigma1 = float(sigma1_f)
                 sigma2 = float(sigma2_f)
                 a = float(a_f)
                 b = float(b_f)
+
+
+
             # Komponentit (ilman taustaa)
             g1 = A1 * np.exp(-(x_smooth - mu1) ** 2 / (2.0 * sigma1 ** 2))
             g2 = A2 * np.exp(-(x_smooth - mu2) ** 2 / (2.0 * sigma2 ** 2))
@@ -403,7 +345,7 @@ def write_int_ring2():
     data_decay = {}
     data_feeder = {}
 
-    with open("ratios_only_ring2_66As_8_others.txt", "r") as f:
+    with open("ratios_only_ring2_66As_8.txt", "r") as f:
         for line in f:
             parts = line.strip().split()
             if len(parts) < 5:
@@ -416,7 +358,7 @@ def write_int_ring2():
                 elif label.startswith(f"{prefix}_feeder"):
                     data_feeder[key] = values
 
-    with open("int_ring2_66As_8_others.fit", "w") as f_out:
+    with open("int_ring2_66As_8.fit", "w") as f_out:
         for key in sorted(label_map.values()):
             row = [key]
             row.extend(data_decay.get(key, [0.0]*4))
@@ -495,7 +437,7 @@ def overwrite_entry_in_file(filename, label, line_content, ratio_info=None):
 
 
 # --- Tallennus ---
-def export_saved_fits_to_file(filename="ratios_ring2_66As_8_others.txt"):
+def export_saved_fits_to_file(filename="ratios_ring2_66As_8.txt"):
     if not saved_fits:
         print("❌ Ei sovituksia tallennettavaksi tiedostoon.")
         return
@@ -561,22 +503,22 @@ def is_feeder_label(label: str) -> bool:
 
 
 
-min_decay = 1080
-max_decay = 1180
-min_feed = 300
-max_feed = 400
+min_decay = 910
+max_decay = 1010
+min_feed = 330
+max_feed = 429
 # tiedostot ja alkuarvot
 # tiedostot ja alkuarvot
 files = {
-    "5um_decay": ("d35um_379_JG3.dat", (min_decay, max_decay), [10, 1137, 2.1181683397936784, 10, 1150, 2.1468796363399467, 0, 10]),
-    "270um_decay": ("d300um_379_01.dat", (min_decay, max_decay), [10, 1137, 2.1181683397936784, 10, 1150, 2.1468796363399467, 0, 10]),
-    "700um_decay": ("d700um_379_01.dat", (min_decay, max_decay), [10, 1137, 2.1181683397936784, 10, 1150, 2.1468796363399467, 0, 10]),
-    "1300um_decay": ("d1300um_379.dat", (min_decay, max_decay), [10, 1137, 2.1181683397936784, 10, 1150, 2.1468796363399467, 0, 10]),
+    "5um_decay": ("d35um_379_JG3.dat", (min_decay, max_decay), [10, 953.4482655124717, 1.8, 10, 963.5164297894413, 1.8, 0, 0]),
+    "270um_decay": ("d300um_379_01.dat", (min_decay, max_decay), [10, 953.4482655124717, 1.8, 10, 963.5164297894413, 1.8, 0, 0]),
+    "700um_decay": ("d700um_379_01.dat", (min_decay, max_decay), [10, 953.4482655124717, 1.8, 10, 963.5164297894413, 1.8, 0, 0]),
+    "1300um_decay": ("d1300um_379.dat", (min_decay, max_decay), [10, 953.4482655124717, 1.8, 10, 963.5164297894413, 1.8, 0, 0]),
   
-    "5um_feeder": ("d35um_379_JG3.dat", (min_feed, max_feed), [20, 355, 2.1181683397936784, 20, 358, 2.1468796363399467, 0, 10]),
-    "270um_feeder": ("d300um_379_01.dat", (min_feed, max_feed), [20, 355, 2.1181683397936784, 20, 358, 2.1468796363399467, 0, 10]),
-    "700um_feeder": ("d700um_379_01.dat", (min_feed, max_feed), [20, 355, 2.312570053028877, 20, 358,  2.6827798628596735, 0, 10]),
-    "1300um_feeder": ("d1300um_379.dat", (min_feed, max_feed), [20, 355, 2.312570053028877, 20, 358,  2.6827798628596735, 0, 10])
+    "5um_feeder": ("d35um_379_JG3.dat", (min_feed, max_feed), [20, 375.4482655124717, 1.4, 20, 378.5164297894413, 1.4, 0, 0]),
+    "270um_feeder": ("d300um_379_01.dat", (min_feed, max_feed), [20, 375.4482655124717, 1.4, 20, 378.5164297894413, 1.4, 0, 0]),
+    "700um_feeder": ("d700um_379_01.dat", (min_feed, max_feed), [20, 375.7944469668705, 1.4, 20, 378.944321665719,  1.4, 0, 0]),
+    "1300um_feeder": ("d1300um_379.dat", (min_feed, max_feed), [20, 375.7944469668705, 1.4, 20, 378.944321665719,  1.4, 0, 0])
  
 }
 
@@ -603,8 +545,8 @@ for label, (filename, fit_range, p0) in files.items():
         p0[-2] = a_bg
         p0[-1] = b_bg
 
-        lower_bounds = [0, 0, 2.0, 0, 0, 2.0, -np.inf, -np.inf]
-        upper_bounds = [np.inf, np.inf, 8.0, np.inf, np.inf, 8.0, np.inf, np.inf]
+        lower_bounds = [0, 0, 1.0, 0, 0, 1.0, -np.inf, -np.inf]
+        upper_bounds = [np.inf, np.inf, 5.0, np.inf, np.inf, 5.0, np.inf, np.inf]
         y_fit_for_fit = np.maximum(y_fit, 0)
         popt, _ = curve_fit(
             double_gaussian_with_linear, x_fit, y_fit, p0=p0,
@@ -633,15 +575,22 @@ checkbox_ax = plt.axes([0.01, 0.25, 0.2, 0.1])
 
 auto_checkbox = CheckButtons(
     checkbox_ax,
-    ['Auto-fit A1', 'Auto-fit A2', 'Auto-fit sigma1', 'Auto-fit sigma2', 'Auto-fit mu1', 'Auto-fit mu2'],
-    [False, False, False, False, False, False]
+    [
+        r'Auto-fit $A_1$',
+        r'Auto-fit $A_2$',
+        r'Auto-fit $\sigma_1$',
+        r'Auto-fit $\sigma_2$',
+        r'Auto-fit $\mu_1$',
+        r'Auto-fit $\mu_2$'
+    ],
+    [True, True, False, False, False, False]
 )
 
 
 auto_fit_params = {
     label: {
-        "A1": False,
-        "A2": False,
+        "A1": True,
+        "A2": True,
         "sigma1": False,
         "sigma2": False,
         "mu1": False,
@@ -657,20 +606,21 @@ def auto_checkbox_callback(label):
     if _updating_auto_checkbox:
         return
 
-    if label == 'Auto-fit A1':
+    if label == r'Auto-fit $A_1$':
         auto_fit_params[current_label]["A1"] = not auto_fit_params[current_label]["A1"]
-    elif label == 'Auto-fit A2':
+    elif label == r'Auto-fit $A_2$':
         auto_fit_params[current_label]["A2"] = not auto_fit_params[current_label]["A2"]
-    elif label == 'Auto-fit sigma1':
+    elif label == r'Auto-fit $\sigma_1$':
         auto_fit_params[current_label]["sigma1"] = not auto_fit_params[current_label]["sigma1"]
-    elif label == 'Auto-fit sigma2':
+    elif label == r'Auto-fit $\sigma_2$':
         auto_fit_params[current_label]["sigma2"] = not auto_fit_params[current_label]["sigma2"]
-    elif label == 'Auto-fit mu1':
+    elif label == r'Auto-fit $\mu_1$':
         auto_fit_params[current_label]["mu1"] = not auto_fit_params[current_label]["mu1"]
-    elif label == 'Auto-fit mu2':
+    elif label == r'Auto-fit $\mu_2$':
         auto_fit_params[current_label]["mu2"] = not auto_fit_params[current_label]["mu2"]
+
     update_plot()
-    
+
 auto_checkbox.on_clicked(auto_checkbox_callback)
 
 
@@ -709,10 +659,8 @@ slider_b = Slider(slider_ax_b, 'b (bg)', -2000, 2000, valinit=10)
 slider_ax_A1 = plt.axes([0.88, 0.75, 0.1, 0.03])
 slider_ax_A2 = plt.axes([0.88, 0.70, 0.1, 0.03])
 
-slider_A1 = Slider(slider_ax_A1, 'A1 (amp)', 0, 30, valinit=10)
-slider_A2 = Slider(slider_ax_A2, 'A2 (amp)', 0, 30, valinit=10)
-
-
+slider_A1 = Slider(slider_ax_A1, r'$A_1$ (amp)', 0, 30, valinit=10)
+slider_A2 = Slider(slider_ax_A2, r'$A_2$ (amp)', 0, 30, valinit=10)
 
 
 from matplotlib.widgets import TextBox
@@ -796,10 +744,10 @@ slider_A2.on_changed(on_slider_A2_change)
 
 
 slider_ax_mu1 = plt.axes([0.3, 0.2, 0.55, 0.03])
-slider_mu1 = Slider(slider_ax_mu1, 'mu1 (keV)', 1110, 1160, valinit=953)
+slider_mu1 = Slider(slider_ax_mu1, r'$\mu_1$ (keV)', 940, 970, valinit=953)
 
 slider_ax_mu2 = plt.axes([0.3, 0.25, 0.55, 0.03])
-slider_mu2 = Slider(slider_ax_mu2, 'mu2 (keV)', 330, 380, valinit=961)
+slider_mu2 = Slider(slider_ax_mu2, r'$\mu_2$ (keV)', 940, 970, valinit=961)
 
 textbox_ax_mu1 = plt.axes([0.92, 0.2, 0.55, 0.03])  # sijoittelu sliderin oikealle puolelle
 textbox_mu1 = TextBox(textbox_ax_mu1, '', initial=str(slider_mu1.val))
@@ -873,10 +821,10 @@ def on_slider_mu2_change(val):
 fig.canvas.draw_idle()
 
 slider_ax_sigma2 = plt.axes([0.3, 0.94, 0.55, 0.03])  # ylin
-slider_sigma2 = Slider(slider_ax_sigma2, 'σ2', 1.0, 6.0, valinit=2.5)
+slider_sigma2 = Slider(slider_ax_sigma2, r'$\sigma_2$', 1.0, 6.0, valinit=2.5)
 
 slider_ax_sigma1 = plt.axes([0.3, 0.89, 0.55, 0.03])  # sen alla
-slider_sigma1 = Slider(slider_ax_sigma1, 'σ1', 1.0, 6.0, valinit=2.5)
+slider_sigma1 = Slider(slider_ax_sigma1, r'$\sigma_1$', 1.0, 6.0, valinit=2.5)
 
 current_label = list(files.keys())[0]
 
@@ -952,19 +900,7 @@ def update_plot():
 
     sigma1_start = sigma1_fixed
     sigma2_start = sigma2_fixed
-    # --- AMPLITUDIT ---
-
-
-    # --- AMPLITUDIT JA SIGMAT ---
-    
-#    A1, A2 = amp_params[label]
-
-  #  A1_manual, A2_manual = amp_params[label]
-  #  A1, A2 = A1_manual, A2_manual
-
-#    sigma1_start = sigma1_fixed
- #   sigma2_start = sigma2_fixed
-
+ 
     sigma1_err, sigma2_err = get_sigma_uncertainties(
         label, default_sigma1=0.1, default_sigma2=0.1
     )
@@ -1158,9 +1094,9 @@ slider_sigma2.on_changed(lambda val: update_plot())
 
 def update_slider_ranges(label):
     if "feeder" in label:
-        new_range = (300, 400)
+        new_range = (330, 429)
     else:
-        new_range = (1100, 1200)
+        new_range = (940, 980)
 
     # Päivitä raja-arvot
     slider_mu1.valmin, slider_mu1.valmax = new_range
@@ -1221,7 +1157,7 @@ def print_saved_table():
     print(header)
     print("-" * len(header))
 
-    ratios_only_file = "ratios_only_ring2_66As_8_others.txt"
+    ratios_only_file = "ratios_only_ring2_66As_8.txt"
     lines_dict = {}
     if os.path.exists(ratios_only_file):
         with open(ratios_only_file, "r") as f:
@@ -1596,8 +1532,8 @@ def save_current_fit(event=None):
     print_saved_table()
 
     # 🔽 Kirjoita tiedostoon
-    decay_file = "params_decay_ring2_66As_8_others.txt"
-    feeder_file = "params_feeder_ring2_66As_8_others.txt"
+    decay_file = "params_decay_ring2_66As_8.txt"
+    feeder_file = "params_feeder_ring2_66As_8.txt"
 
     out_line = f"{label:<18} {A1:.1f} {mu1_fixed:.3f} {sigma1_fixed:.3f} {A2:.1f} {mu2_fixed:.3f} {sigma2_fixed:.3f} {a:.4f} {b:.2f}\n"
 
@@ -1619,9 +1555,9 @@ def save_current_fit(event=None):
         )
 
         if "decay" in label:
-            ratios_file = "gaussian_peak_areas_decay_with_ratios_ring2_66As_8_others.txt"
+            ratios_file = "gaussian_peak_areas_decay_with_ratios_ring2_66As_8.txt"
         else:
-            ratios_file = "gaussian_peak_areas_feeder_with_ratios_ring2_66As_8_others.txt"
+            ratios_file = "gaussian_peak_areas_feeder_with_ratios_ring2_66As_8.txt"
 
         line = (
             f"{label:<14} "
@@ -1632,7 +1568,7 @@ def save_current_fit(event=None):
         )
         overwrite_entry_in_file(ratios_file, label, line)
 
-        ratios_only_file = "ratios_only_ring2_66As_8_others.txt"
+        ratios_only_file = "ratios_only_ring2_66As_8.txt"
         ratios_only_line = (
             f"{label:<14} "
             f"{ratio1:9.4f} {dRatio1:8.4f} "
@@ -1644,7 +1580,11 @@ def save_current_fit(event=None):
 
 
         # 🔽 Tallenna ratioarvot oikeilla epävarmuuksilla myös tähän tiedostoon
-        ratios_only_file = "ratios_only_ring2_66As_8_others.txt"
+        ratios_only_file = "ratios_only_ring2_66As_8.txt"
+
+
+
+    
 
 # 5. Kytke nappi toimintaan
 save_button.on_clicked(save_current_fit)
@@ -1666,8 +1606,8 @@ import numpy as np
 import pandas as pd
 
 # Lue decay- ja feeder-tiedostot
-decay_df = pd.read_csv("gaussian_peak_areas_decay_with_ratios_ring2_66As_8_others.txt", sep="\s+", header=None)
-feeder_df = pd.read_csv("gaussian_peak_areas_feeder_with_ratios_ring2_66As_8_others.txt", sep="\s+", header=None)
+decay_df = pd.read_csv("gaussian_peak_areas_decay_with_ratios_ring2_66As_8.txt", sep="\s+", header=None)
+feeder_df = pd.read_csv("gaussian_peak_areas_feeder_with_ratios_ring2_66As_8.txt", sep="\s+", header=None)
 
 # Nimeä sarakkeet
 cols = [
@@ -1739,7 +1679,7 @@ last_column = {
 data_decay = {}
 data_feeder = {}
 
-with open("ratios_only_ring2_66As_8_others.txt", "r") as f:
+with open("ratios_only_ring2_66As_8.txt", "r") as f:
     for line in f:
         parts = line.strip().split()
         label = parts[0]
@@ -1750,11 +1690,10 @@ with open("ratios_only_ring2_66As_8_others.txt", "r") as f:
             elif label.startswith(f"{prefix}_feeder"):
                 data_feeder[key] = values
 
-with open("int_ring2_66As_8_others.fit", "w") as f_out:
+with open("int_ring2_66As_8.fit", "w") as f_out:
     for key in sorted(label_map.values()):
         row = [key]
         row.extend(data_decay.get(key, [0.0]*4))
         row.extend(data_feeder.get(key, [0.0]*4))
      #   row.append(last_column.get(key, 0.0))
-        f_out.write(" ".join(f"{x:.4f}" if isinstance(x, float) else str(x) for x in row) + "\n") 
-
+        f_out.write(" ".join(f"{x:.4f}" if isinstance(x, float) else str(x) for x in row) + "\n") myös labelit A1 ja A2 latex-formaattiin A_1 ja A_2
