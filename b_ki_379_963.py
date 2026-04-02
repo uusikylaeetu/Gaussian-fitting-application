@@ -10,20 +10,23 @@ import os
 saved_fits = {}
 
 EFF_FEEDER = 1.7
-EFF_DECAY =  1
+SIG_EFF_FEEDER = 0.02
+
+EFF_DECAY = 1.0
+SIG_EFF_DECAY = 0.02
+
 _updating_mu1_box = False
 _updating_mu2_box = False
 _updating_a_box = False
 _updating_b_box = False
 
 def calculate_b_ki_and_error(decay_params, feeder_params):
-	
     """
     Laskee
-        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * eff_decay / feeder
 
-    sekä virheen
-        sig_b_ki
+        b_ki = ((Area1_feeder + Area2_feeder) / (Area1_decay + Area2_decay)) * (EFF_FEEDER / EFF_DECAY)**(-1)
+
+    sekä virheen sig_b_ki.
 
     Oletetaan riippumattomat virheet.
     """
@@ -49,11 +52,10 @@ def calculate_b_ki_and_error(decay_params, feeder_params):
     if total_decay <= 0 or total_feeder <= 0:
         return np.nan, np.nan
 
-    # Summan virhe
     sig_total_decay = np.sqrt(dArea1_d**2 + dArea2_d**2)
     sig_total_feeder = np.sqrt(dArea1_f**2 + dArea2_f**2)
 
-    b_ki = (total_feeder / total_decay) * (EFF_DECAY / EFF_FEEDER )
+    b_ki = (total_feeder / total_decay) * (EFF_FEEDER / EFF_DECAY)
 
     rel2 = (
         (sig_total_feeder / total_feeder) ** 2 +
