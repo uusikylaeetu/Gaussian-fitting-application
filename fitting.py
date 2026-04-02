@@ -1024,8 +1024,7 @@ def update_plot():
     ax.text(0.05, 0.95, f"mu2 = {mu2_fixed:.2f} keV\nFWHM = {fwhm:.2f} keV",
             transform=ax.transAxes, va='top')
 
-	)
-
+	
 
 
     fig.canvas.draw_idle()
