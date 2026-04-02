@@ -565,13 +565,13 @@ max_feed = 429
 # tiedostot ja alkuarvot
 # tiedostot ja alkuarvot
 files = {
-    "5um_decay": ("d35um_379_JG3.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
-    "270um_decay": ("d300um_379_01.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
+    "0_5keV_decay": ("juro3_beta_tagged_total_0_5keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
+    "1keV_decay": ("juro3_beta_tagged_total_1keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
     "700um_decay": ("d700um_379_01.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
     "1300um_decay": ("d1300um_379_01.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
   
-    "5um_feeder": ("d35um_379_JG3.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
-    "270um_feeder": ("d300um_379_01.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
+    "0_5keV_feeder": ("juro3_beta_tagged_total_0_5keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
+    "1keV_feeder": ("juro3_beta_tagged_total_1keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
     "700um_feeder": ("d700um_379_01.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0]),
     "1300um_feeder": ("d1300um_379_01.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0])
  
@@ -1211,7 +1211,7 @@ def save_current_fit(event=None):
 
 
 
-    if label == "5um_decay":
+    if label == "0_5keV_decay":
         # Sovitetaan koko double_gaussian_with_linear uudestaan a:n ja b:n mukaan        
         
         
@@ -1224,7 +1224,7 @@ def save_current_fit(event=None):
                         [np.inf, np.inf, 8.0, np.inf, np.inf, 8.0, np.inf, np.inf])
             )
             # Päivitä popt_10
-            fit_results["5um_decay"] = (x_fit, y_fit, x_smooth, popt_new)
+            fit_results["0_5keV_decay"] = (x_fit, y_fit, x_smooth, popt_new)
             popt_10 = popt_new
         except:
             pass  # jätä ennalleen jos epäonnistuu
@@ -1593,46 +1593,3 @@ output_df = pd.DataFrame({
     "I_D_feeder": I_D_feeder,
     "sig_I_D_feeder": sig_I_D_feeder,
 })
-
-
-
-
-
-
-# Lue syötetiedosto ja muodosta uusi tiedosto annetulla rakenteella
-
-label_map = {
-    "5um": 5,
-    "270um": 270,
-    "700um": 700,
-    "1300um": 1300
-}
-
-last_column = {
-    5: 0.1,
-    270: 0.2,
-    700: 0.3,
-    1300: 0.4
-}
-
-data_decay = {}
-data_feeder = {}
-
-with open("ratios_only_ring2_66As_8.txt", "r") as f:
-    for line in f:
-        parts = line.strip().split()
-        label = parts[0]
-        values = list(map(float, parts[1:]))
-        for prefix, key in label_map.items():
-            if label.startswith(f"{prefix}_decay"):
-                data_decay[key] = values
-            elif label.startswith(f"{prefix}_feeder"):
-                data_feeder[key] = values
-
-with open("int_ring2_66As_8.fit", "w") as f_out:
-    for key in sorted(label_map.values()):
-        row = [key]
-        row.extend(data_decay.get(key, [0.0]*4))
-        row.extend(data_feeder.get(key, [0.0]*4))
-     #   row.append(last_column.get(key, 0.0))
-        f_out.write(" ".join(f"{x:.4f}" if isinstance(x, float) else str(x) for x in row) + "\n") 
