@@ -55,7 +55,7 @@ def calculate_b_ki_and_error(decay_params, feeder_params):
     sig_total_decay = np.sqrt(dArea1_d**2 + dArea2_d**2)
     sig_total_feeder = np.sqrt(dArea1_f**2 + dArea2_f**2)
 
-    b_ki = (total_feeder / total_decay) * (EFF_FEEDER / EFF_DECAY)
+    b_ki = (total_feeder / total_decay) * (EFF_DECAY / EFF_FEEDER EFF_DECAY)
 
     rel2 = (
         (sig_total_feeder / total_feeder) ** 2 +
