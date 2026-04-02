@@ -28,52 +28,67 @@ def build_output_files():
         print(f"⚠️ Tiedosto puuttuu: {feeder_file}")
         return
 
-    decay_df = pd.read_csv(decay_file, sep=r"\s+", header=None)
-    feeder_df = pd.read_csv(feeder_file, sep=r"\s+", header=None)
-
     cols = [
         "label", "Area1", "dArea1", "Area2", "dArea2",
         "AreaRatio1", "dAreaRatio1", "AreaRatio2", "dAreaRatio2"
     ]
-    decay_df.columns = feeder_df.columns = cols
+
+    decay_df = pd.read_csv(decay_file, sep=r"\s+", header=None, names=cols)
+    feeder_df = pd.read_csv(feeder_file, sep=r"\s+", header=None, names=cols)
 
     decay_df["d"] = decay_df["label"].str.extract(r"(\d+)").astype(float)
     feeder_df["d"] = feeder_df["label"].str.extract(r"(\d+)").astype(float)
 
-    decay_df = decay_df.sort_values("d")
-    feeder_df = feeder_df.sort_values("d")
-
     def compute_fractions(df):
-        Area1 = df["Area1"].values
-        Area2 = df["Area2"].values
-        dA1 = df["dArea1"].values
-        dA2 = df["dArea2"].values
+        Area1 = df["Area1"].astype(float).values
+        Area2 = df["Area2"].astype(float).values
+        dA1 = df["dArea1"].astype(float).values
+        dA2 = df["dArea2"].astype(float).values
         total = Area1 + Area2
 
-        I_S = Area1 / total
-        I_D = Area2 / total
+        # vältetään jako nollalla
+        with np.errstate(divide="ignore", invalid="ignore"):
+            I_S = np.where(total > 0, Area1 / total, np.nan)
+            I_D = np.where(total > 0, Area2 / total, np.nan)
 
-        dI_S = I_S * np.sqrt((dA1 / Area1)**2 + (dA2 / total)**2)
-        dI_D = I_D * np.sqrt((dA2 / Area2)**2 + (dA1 / total)**2)
+            dI_S = np.where(
+                (Area1 > 0) & (total > 0),
+                I_S * np.sqrt((dA1 / Area1) ** 2 + (dA2 / total) ** 2),
+                np.nan
+            )
+            dI_D = np.where(
+                (Area2 > 0) & (total > 0),
+                I_D * np.sqrt((dA2 / Area2) ** 2 + (dA1 / total) ** 2),
+                np.nan
+            )
 
-        return I_S, dI_S, I_D, dI_D
+        return pd.DataFrame({
+            "d": df["d"].values,
+            "I_S": I_S,
+            "sig_I_S": dI_S,
+            "I_D": I_D,
+            "sig_I_D": dI_D
+        })
 
-    I_S_decay, sig_I_S_decay, I_D_decay, sig_I_D_decay = compute_fractions(decay_df)
-    I_S_feeder, sig_I_S_feeder, I_D_feeder, sig_I_D_feeder = compute_fractions(feeder_df)
-
-    output_df = pd.DataFrame({
-        "d": decay_df["d"].values / 1e6,
-        "I_S_decay": I_S_decay,
-        "sig_I_S_decay": sig_I_S_decay,
-        "I_D_decay": I_D_decay,
-        "sig_I_D_decay": sig_I_D_decay,
-        "I_S_feeder": I_S_feeder,
-        "sig_I_S_feeder": sig_I_S_feeder,
-        "I_D_feeder": I_D_feeder,
-        "sig_I_D_feeder": sig_I_D_feeder,
+    decay_out = compute_fractions(decay_df).rename(columns={
+        "I_S": "I_S_decay",
+        "sig_I_S": "sig_I_S_decay",
+        "I_D": "I_D_decay",
+        "sig_I_D": "sig_I_D_decay"
     })
 
+    feeder_out = compute_fractions(feeder_df).rename(columns={
+        "I_S": "I_S_feeder",
+        "sig_I_S": "sig_I_S_feeder",
+        "I_D": "I_D_feeder",
+        "sig_I_D": "sig_I_D_feeder"
+    })
+
+    output_df = pd.merge(decay_out, feeder_out, on="d", how="outer").sort_values("d")
+    output_df["d"] = output_df["d"] / 1e6
+
     print(output_df)
+    return output_df
 
 def sync_auto_checkboxes(label):
     global _updating_auto_checkbox
