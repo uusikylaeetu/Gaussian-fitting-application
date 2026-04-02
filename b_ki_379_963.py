@@ -567,14 +567,11 @@ max_feed = 429
 files = {
     "0_5keV_decay": ("juro3_beta_tagged_total_0_5keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
     "1keV_decay": ("juro3_beta_tagged_total_1keV.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
-    "700um_decay": ("d700um_379_01.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
-    "1300um_decay": ("d1300um_379_01.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
-  
+    "1keV_decay_mpq_decay": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_decay, max_decay), [10, 963.4482655124717, 1.8, 10, 973.5164297894413, 1.8, 0, 0]),
+
     "0_5keV_feeder": ("juro3_beta_tagged_total_0_5keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
     "1keV_feeder": ("juro3_beta_tagged_total_1keV.dat", (min_feed, max_feed), [20, 378.4482655124717, 1.4, 20, 381.5164297894413, 1.4, 0, 0]),
-    "700um_feeder": ("d700um_379_01.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0]),
-    "1300um_feeder": ("d1300um_379_01.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0])
- 
+    "1keV_decay_mpq_feeder": ("juro3_beta_tagged_total_1keV_mpq_gated.dat", (min_feed, max_feed), [20, 378.7944469668705, 1.4, 20, 381.944321665719,  1.4, 0, 0])
 }
 
 fit_results = {}
@@ -1208,38 +1205,6 @@ def save_current_fit(event=None):
     sigma2_fixed = slider_sigma2.val
     
     mu1_fixed = slider_mu1.val
-
-
-
-    if label == "0_5keV_decay":
-        # Sovitetaan koko double_gaussian_with_linear uudestaan a:n ja b:n mukaan        
-        
-        
-        try:
-            popt_new, _ = curve_fit(
-                double_gaussian_with_linear, x_fit, y_fit,
-                p0=[full_popt[0], full_popt[1], full_popt[2],
-                    full_popt[3], full_popt[4], full_popt[5], a, b],
-                bounds=([0, 0, 1.0, 0, 0, 1.0, -np.inf, -np.inf],
-                        [np.inf, np.inf, 8.0, np.inf, np.inf, 8.0, np.inf, np.inf])
-            )
-            # Päivitä popt_10
-            fit_results["0_5keV_decay"] = (x_fit, y_fit, x_smooth, popt_new)
-            popt_10 = popt_new
-        except:
-            pass  # jätä ennalleen jos epäonnistuu
-    elif label == "1300um_decay":
-        try:
-            popt_new, _ = curve_fit(
-                double_gaussian_with_linear, x_fit, y_fit,
-                p0=full_popt,
-                bounds=([0, 0, 1.0, 0, 0, 1.0, -np.inf, -np.inf],
-                        [np.inf, np.inf, 8.0, np.inf, np.inf, 8.0, np.inf, np.inf])
-            )
-            fit_results["1300um_decay"] = (x_fit, y_fit, x_smooth, popt_new)
-            popt_290 = popt_new
-        except:
-            pass
 
 
     x_fit, y_fit, x_smooth, _ = result
