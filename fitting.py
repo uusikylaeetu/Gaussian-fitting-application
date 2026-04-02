@@ -649,7 +649,7 @@ slider_ax_a = plt.axes([0.3, 0.15, 0.55, 0.03])
 slider_a = Slider(slider_ax_a, 'a (bg)', -1.5, 1.5, valinit=0)
 
 slider_ax_b = plt.axes([0.3, 0.1, 0.55, 0.03])
-slider_b = Slider(slider_ax_b, 'b (bg)', -2000, 2000, valinit=10)
+slider_b = Slider(slider_ax_b, 'b (bg)', -2000, 2000, valinit=0)
 
 
 slider_ax_A1 = plt.axes([0.88, 0.75, 0.1, 0.03])
@@ -817,10 +817,10 @@ def on_slider_mu2_change(val):
 fig.canvas.draw_idle()
 
 slider_ax_sigma2 = plt.axes([0.3, 0.94, 0.55, 0.03])  # ylin
-slider_sigma2 = Slider(slider_ax_sigma2, r'$\sigma_2$', 1.0, 6.0, valinit=2.5)
+slider_sigma2 = Slider(slider_ax_sigma2, r'$\sigma_2$', 1.0, 6.0, valinit=2)
 
 slider_ax_sigma1 = plt.axes([0.3, 0.89, 0.55, 0.03])  # sen alla
-slider_sigma1 = Slider(slider_ax_sigma1, r'$\sigma_1$', 1.0, 6.0, valinit=2.5)
+slider_sigma1 = Slider(slider_ax_sigma1, r'$\sigma_1$', 1.0, 6.0, valinit=2)
 
 current_label = list(files.keys())[0]
 
