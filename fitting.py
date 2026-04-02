@@ -15,6 +15,65 @@ _updating_mu2_box = False
 _updating_a_box = False
 _updating_b_box = False
 
+def build_output_files():
+    decay_file = "gaussian_peak_areas_decay_with_ratios_ring2_66As_8.txt"
+    feeder_file = "gaussian_peak_areas_feeder_with_ratios_ring2_66As_8.txt"
+
+    if not os.path.exists(decay_file):
+        print(f"⚠️ Tiedosto puuttuu: {decay_file}")
+        return
+
+    if not os.path.exists(feeder_file):
+        print(f"⚠️ Tiedosto puuttuu: {feeder_file}")
+        return
+
+    decay_df = pd.read_csv(decay_file, sep=r"\s+", header=None)
+    feeder_df = pd.read_csv(feeder_file, sep=r"\s+", header=None)
+
+    cols = [
+        "label", "Area1", "dArea1", "Area2", "dArea2",
+        "AreaRatio1", "dAreaRatio1", "AreaRatio2", "dAreaRatio2"
+    ]
+    decay_df.columns = feeder_df.columns = cols
+
+    decay_df["d"] = decay_df["label"].str.extract(r"(\d+)").astype(float)
+    feeder_df["d"] = feeder_df["label"].str.extract(r"(\d+)").astype(float)
+
+    decay_df = decay_df.sort_values("d")
+    feeder_df = feeder_df.sort_values("d")
+
+    def compute_fractions(df):
+        Area1 = df["Area1"].values
+        Area2 = df["Area2"].values
+        dA1 = df["dArea1"].values
+        dA2 = df["dArea2"].values
+        total = Area1 + Area2
+
+        I_S = Area1 / total
+        I_D = Area2 / total
+
+        dI_S = I_S * np.sqrt((dA1 / Area1)**2 + (dA2 / total)**2)
+        dI_D = I_D * np.sqrt((dA2 / Area2)**2 + (dA1 / total)**2)
+
+        return I_S, dI_S, I_D, dI_D
+
+    I_S_decay, sig_I_S_decay, I_D_decay, sig_I_D_decay = compute_fractions(decay_df)
+    I_S_feeder, sig_I_S_feeder, I_D_feeder, sig_I_D_feeder = compute_fractions(feeder_df)
+
+    output_df = pd.DataFrame({
+        "d": decay_df["d"].values / 1e6,
+        "I_S_decay": I_S_decay,
+        "sig_I_S_decay": sig_I_S_decay,
+        "I_D_decay": I_D_decay,
+        "sig_I_D_decay": sig_I_D_decay,
+        "I_S_feeder": I_S_feeder,
+        "sig_I_S_feeder": sig_I_S_feeder,
+        "I_D_feeder": I_D_feeder,
+        "sig_I_D_feeder": sig_I_D_feeder,
+    })
+
+    print(output_df)
+
 def sync_auto_checkboxes(label):
     global _updating_auto_checkbox
 
@@ -1536,9 +1595,7 @@ all_button.on_clicked(draw_all_spectra)
 
 
 plt.show() 
-
-
-
+build_output_files()
 
 
 
