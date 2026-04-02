@@ -320,11 +320,7 @@ def single_gaussian_with_linear(x, A1, mu1, sigma1, a, b):
     g1 = A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2))
     return g1 + a * x + b
 
-def calculate_reduced_chi2(x, y, y_fit, dof):
-    # Vältä nollien neliöjuurta
-    sigma = np.sqrt(np.maximum(y, 1))
-    chi2 = np.sum(((y - y_fit) / sigma)**2)
-    return chi2 / dof
+
 
 
 def write_int_ring2():
@@ -828,32 +824,6 @@ slider_sigma1 = Slider(slider_ax_sigma1, r'$\sigma_1$', 1.0, 6.0, valinit=2.5)
 
 current_label = list(files.keys())[0]
 
-f = 1.3
-def custom_chi2_segment(x_fit, y_fit, model_func, label, mu1, sigma1, mu2, sigma2):
-    """Valitsee sopivan segmentin chi²-laskentaan piikkien perusteella."""
-    if "5um" in label:
-        # Käytä vain oikeanpuoleista piikkiä (mu2)
-        peak_mask = (x_fit > mu2 - f * sigma2) & (x_fit < mu2 + f * sigma2)
-    elif "1300um" in label:
-        # Käytä vain vasemmanpuoleista piikkiä (mu1)
-        peak_mask = (x_fit > mu1 - f * sigma1) & (x_fit < mu1 + f * sigma1)
-    else:
-        # Käytä molempia
-        peak_mask1 = (x_fit > mu1 - f * sigma1) & (x_fit < mu1 + f * sigma1)
-        peak_mask2 = (x_fit > mu2 - f * sigma2) & (x_fit < mu2 + f * sigma2)
-        peak_mask = peak_mask1 | peak_mask2
-
-    x_peak = x_fit[peak_mask]
-    y_peak = y_fit[peak_mask]
-    y_model_peak = model_func(x_peak)
-
-    dof = len(x_peak) - 2
-    if dof > 0:
-        return calculate_reduced_chi2(x_peak, y_peak, y_model_peak, dof)
-    else:
-        return None
-
-
 
 
 def update_plot():
@@ -1054,29 +1024,9 @@ def update_plot():
     ax.text(0.05, 0.95, f"mu2 = {mu2_fixed:.2f} keV\nFWHM = {fwhm:.2f} keV",
             transform=ax.transAxes, va='top')
 
-    # --- CHI2 ---
-    def model_for_chi(x):
-        return (
-            A1 * np.exp(-(x - mu1_fixed)**2 / (2 * sigma1_fixed**2))
-            + A2 * np.exp(-(x - mu2_fixed)**2 / (2 * sigma2_fixed**2))
-            + a*x + b
-        )
-
-    reduced_chi2 = custom_chi2_segment(
-        x_fit, y_fit,
-        model_for_chi,
-        label,
-        mu1_fixed, sigma1_fixed,
-        mu2_fixed, sigma2_fixed
-    )
+	)
 
 
-    
-
-    if reduced_chi2 is not None:
-        ax.text(0.05, 0.80, f"χ²_red = {reduced_chi2:.2f}", transform=ax.transAxes, va='top')
-    else:
-        ax.text(0.05, 0.80, "χ²_red = N/A", transform=ax.transAxes, va='top')
 
     fig.canvas.draw_idle()
 
